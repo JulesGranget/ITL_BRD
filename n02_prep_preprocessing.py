@@ -27,7 +27,7 @@ debug = False
 
 
 
-#sujet, cond = sujet_list[14], 'VS'
+#sujet, cond = sujet_list[0], 'CHARGE'
 def open_raw_data(sujet, cond):
 
     ######## identify project and sujet ########        
@@ -921,7 +921,7 @@ if __name__== '__main__':
     #sujet = sujet_list[2]
     for sujet in sujet_list:
 
-        #cond = cond_list[0]
+        #cond = cond_list[1]
         for cond in cond_list:
 
             ########################################
