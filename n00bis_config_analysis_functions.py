@@ -2237,7 +2237,8 @@ def get_permutation_cluster_2d(data_baseline, data_cond, n_surr, stat_design='wi
 
         mask_thresh = np.zeros_like(im_with_separated_blobs)
         for blob in range(nb_blobs):
-            if sizes[blob] >= min_size:
+            blob_vec = np.sum(im_with_separated_blobs == blob + 1, axis=0)
+            if np.sum(blob_vec != 0) >= min_size:
                 mask_thresh[im_with_separated_blobs == blob + 1] = 1
 
         if debug:

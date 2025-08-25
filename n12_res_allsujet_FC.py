@@ -894,6 +894,7 @@ def plot_allsujet_FC_graph_stretch():
     #fc_metric = 'WPLI'
     for fc_metric in ['MI', 'ISPC', 'WPLI']:
 
+        #data_type = 'rscore'
         for data_type in ['raw', 'rscore']:
 
             print(f'{fc_metric} {data_type} PLOT stretch', flush=True)
@@ -948,6 +949,7 @@ def plot_allsujet_FC_graph_stretch():
             #band_i, band = 0, freq_band_fc_list[0]
             for band_i, band in enumerate(freq_band_fc_list):
 
+                #stat_type = 'HOMEMADE'
                 for stat_type in ['HOMEMADE', 'MNE']:
 
                     os.chdir(os.path.join(path_precompute, 'FC', fc_metric))
@@ -1211,7 +1213,6 @@ def plot_allsujet_FC_graph_stretch():
 
                             df_plot = df_graph_metrics_node_wise.query(f"mode == '{mode}'")
                             sns.barplot(data=df_plot, x="chan", y=metric, hue="phase", alpha=0.6, ax=ax)
-                            ax.set_title(phase) 
                             ax.set_xlabel("Channel")
                             if phase_i == 0:
                                 ax.set_ylabel(metric)
