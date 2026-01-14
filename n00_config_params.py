@@ -183,12 +183,19 @@ elif PC_ID == 'node13':
     path_memmap = '/mnt/data/julesgranget/PIPBox/memmap'
     n_core = 15
 
-else:
+elif PC_ID == 'jules-ubuntu1':
 
-    PC_working = 'node13'
+    PC_working = 'jules-ubuntu1'
     path_main_workdir = '/mnt/data/julesgranget/PIPBox/Scripts'
     path_general = '/mnt/data/julesgranget/PIPBox'
     path_memmap = '/mnt/data/julesgranget/PIPBox/memmap'
+
+else:
+
+    PC_working = 'node13'
+    path_main_workdir = '/home/jules/Documents/PPI_Jules/Scripts'
+    path_general = '/home/jules/Documents/PPI_Jules'
+    path_memmap = '/home/jules/Documents/PPI_Jules/memmap'
     n_core = 15
     
 path_mntdata = '/mnt/data/julesgranget/PIPBox'
