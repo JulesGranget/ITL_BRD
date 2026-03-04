@@ -946,7 +946,7 @@ def plot_allsujet_FC_graph_stretch():
             
             shifted_fc_allsujet = fc_allsujet.roll(time=-phase_shift, roll_coords=False)
 
-            #band_i, band = 0, freq_band_fc_list[0]
+            #band_i, band = 2, freq_band_fc_list[2]
             for band_i, band in enumerate(freq_band_fc_list):
 
                 #stat_type = 'HOMEMADE'
@@ -1023,7 +1023,7 @@ def plot_allsujet_FC_graph_stretch():
                             elif fc_metric != 'MI' and clusters.loc[data_type, phase,band,pair].values.astype('bool'):
                                 fc_mat_only_signi_phase[phase_i, A_i, B_i], fc_mat_only_signi_phase[phase_i, B_i, A_i] = fc_val, fc_val
 
-                    #mat, mask_graph_metric = fc_mat[0, 0, :, :], fc_mat_mask_signi[0,0,:,:]
+                    #mat, mask_graph_metric = fc_mat_phase[phase_i,:,:], fc_mat_mask_signi_phase[phase_i,:,:]
                     def thresh_fc_mat(mat, mode='mask', percentile_graph_metric=50, mask_graph_metric=None):
 
                         if mode == 'percentile':
@@ -1055,19 +1055,19 @@ def plot_allsujet_FC_graph_stretch():
                             return mat_thresh
 
                         #### verify that the graph is fully connected
-                        chan_i_to_remove = []
-                        for chan_i in range(mat_thresh.shape[0]):
-                            if np.sum(mat_thresh[chan_i,:]) == 0:
-                                chan_i_to_remove.append(chan_i)
+                        # chan_i_to_remove = []
+                        # for chan_i in range(mat_thresh.shape[0]):
+                        #     if np.sum(mat_thresh[chan_i,:]) == 0:
+                        #         chan_i_to_remove.append(chan_i)
 
-                        mat_thresh_i_mask = [i for i in range(mat_thresh.shape[0]) if i not in chan_i_to_remove]
+                        # mat_thresh_i_mask = [i for i in range(mat_thresh.shape[0]) if i not in chan_i_to_remove]
 
-                        if len(chan_i_to_remove) != 0:
-                            for row in range(2):
-                                if row == 0:
-                                    mat_thresh = mat_thresh[mat_thresh_i_mask,:]
-                                elif row == 1:
-                                    mat_thresh = mat_thresh[:,mat_thresh_i_mask]
+                        # if len(chan_i_to_remove) != 0:
+                        #     for row in range(2):
+                        #         if row == 0:
+                        #             mat_thresh = mat_thresh[mat_thresh_i_mask,:]
+                        #         elif row == 1:
+                        #             mat_thresh = mat_thresh[:,mat_thresh_i_mask]
 
                         if debug:
                             plt.imshow(mat_thresh)
@@ -1080,126 +1080,124 @@ def plot_allsujet_FC_graph_stretch():
 
                     for mode in ['percentile', 'mask']:
 
-                        for sujet_i, sujet in enumerate(sujet_list_FC):
+                        for phase_i, phase in enumerate(phase_list):
 
-                            for phase_i, phase in enumerate(phase_list):
+                            if fc_mat_mask_signi_phase[phase_i,:,:].sum() == 0:
 
-                                if fc_mat_mask_signi_phase[phase_i,:,:].sum() == 0:
+                                _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'chan' : [chan], 'degree' : [0], 'clustering_coeff' : [0], 
+                                            'betweenness' : [0], 'eigenvector' : [0]})
 
-                                    _df = pd.DataFrame({'sujet' : [sujet], 'phase' : [phase], 'mode' : [mode], 'chan' : [chan], 'degree' : [0], 'clustering_coeff' : [0], 
+                                df_graph_metrics_node_wise = pd.concat((df_graph_metrics_node_wise, _df))
+
+                            else:
+
+                                # Create a graph from the adjacency matrix
+                                mat = thresh_fc_mat(fc_mat_phase[phase_i,:,:], mode=mode, percentile_graph_metric=50 ,mask_graph_metric=fc_mat_mask_signi_phase[phase_i,:,:])
+                                graph = nx.from_numpy_array(mat)
+                                nx.relabel_nodes(graph, mapping=dict(enumerate(chan_list_eeg_short)), copy=False)
+
+                                if debug:
+                                    # Plot the graph
+                                    plt.figure(figsize=(10, 8))
+                                    pos = nx.spring_layout(graph)  # Layout for visualization
+                                    nx.draw(graph, pos, with_labels=True, node_color='skyblue', edge_color='gray', node_size=700, font_size=10)
+                                    plt.title("Graph Visualization")
+                                    plt.show()
+
+                                #### metrics
+                                degree = nx.degree_centrality(graph)
+                                # Formula: degree_centrality(v) = degree(v) / (n - 1), where n is the number of nodes
+
+                                clustering_coeff = nx.clustering(graph)
+
+                                betweenness = nx.betweenness_centrality(graph)
+                                # Formula: betweenness_centrality(v) = sum of (shortest paths through v / total shortest paths)
+
+                                eigenvector = nx.eigenvector_centrality(graph)
+
+                                for chan in chan_list_eeg_short:
+
+                                    try:
+                                        _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'chan' : [chan], 'degree' : [degree[chan]], 'clustering_coeff' : [clustering_coeff[chan]],
+                                                            'betweenness' : [betweenness[chan]], 'eigenvector' : [eigenvector[chan]]})
+
+                                        df_graph_metrics_node_wise = pd.concat((df_graph_metrics_node_wise, _df))
+
+                                    except:
+
+                                        _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'chan' : [chan], 'degree' : [0], 'clustering_coeff' : [0], 
                                                 'betweenness' : [0], 'eigenvector' : [0]})
 
-                                    df_graph_metrics_node_wise = pd.concat((df_graph_metrics_node_wise, _df))
-
-                                else:
-
-                                    # Create a graph from the adjacency matrix
-                                    mat = thresh_fc_mat(fc_mat_phase[phase_i,:,:], mode=mode, percentile_graph_metric=50 ,mask_graph_metric=fc_mat_mask_signi_phase[phase_i,:,:])
-                                    graph = nx.from_numpy_array(mat)
-                                    nx.relabel_nodes(graph, mapping=dict(enumerate(chan_list_eeg_short)), copy=False)
-
-                                    if debug:
-                                        # Plot the graph
-                                        plt.figure(figsize=(10, 8))
-                                        pos = nx.spring_layout(graph)  # Layout for visualization
-                                        nx.draw(graph, pos, with_labels=True, node_color='skyblue', edge_color='gray', node_size=700, font_size=10)
-                                        plt.title("Graph Visualization")
-                                        plt.show()
-
-                                    #### metrics
-                                    degree = nx.degree_centrality(graph)
-                                    # Formula: degree_centrality(v) = degree(v) / (n - 1), where n is the number of nodes
-
-                                    clustering_coeff = nx.clustering(graph)
-
-                                    betweenness = nx.betweenness_centrality(graph)
-                                    # Formula: betweenness_centrality(v) = sum of (shortest paths through v / total shortest paths)
-
-                                    eigenvector = nx.eigenvector_centrality(graph)
-
-                                    for chan in chan_list_eeg_short:
-
-                                        try:
-                                            _df = pd.DataFrame({'sujet' : [sujet], 'phase' : [phase], 'mode' : [mode], 'chan' : [chan], 'degree' : [degree[chan]], 'clustering_coeff' : [clustering_coeff[chan]],
-                                                                'betweenness' : [betweenness[chan]], 'eigenvector' : [eigenvector[chan]]})
-
-                                            df_graph_metrics_node_wise = pd.concat((df_graph_metrics_node_wise, _df))
-
-                                        except:
-
-                                            _df = pd.DataFrame({'sujet' : [sujet], 'phase' : [phase], 'mode' : [mode], 'chan' : [chan], 'degree' : [0], 'clustering_coeff' : [0], 
-                                                    'betweenness' : [0], 'eigenvector' : [0]})
-
-                                            df_graph_metrics_node_wise = pd.concat((df_graph_metrics_node_wise, _df))
+                                        df_graph_metrics_node_wise = pd.concat((df_graph_metrics_node_wise, _df))
 
                     #### graph wise
                     df_graph_metrics_graph_wise = pd.DataFrame()
 
+                    #mode = 'mask'
                     for mode in ['percentile', 'mask']:
 
-                        for sujet_i, sujet in enumerate(sujet_list_FC):
+                        #phase_i, phase = 0, phase_list[0]
+                        for phase_i, phase in enumerate(phase_list):
 
-                            for phase_i, phase in enumerate(phase_list):
+                            if fc_mat_mask_signi_phase[phase_i,:,:].sum() == 0:
 
-                                if fc_mat_mask_signi_phase[phase_i,:,:].sum() == 0:
+                                _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'global_efficiency' : [0], 'path_length' : [0],
+                                            'small_worldness' : [0], 'modularity' : [0]})
 
-                                    _df = pd.DataFrame({'sujet' : [sujet], 'phase' : [phase], 'mode' : [mode], 'global_efficiency' : [0], 'path_length' : [0],
-                                                'small_worldness' : [0], 'modularity' : [0]})
+                                df_graph_metrics_graph_wise = pd.concat((df_graph_metrics_graph_wise, _df))
+
+                            else:
+
+                                # Create a graph from the adjacency matrix
+                                mat = thresh_fc_mat(fc_mat_phase[phase_i,:,:], mode=mode, percentile_graph_metric=50 ,mask_graph_metric=fc_mat_mask_signi_phase[phase_i,:,:])
+                                graph = nx.from_numpy_array(mat)
+                                nx.relabel_nodes(graph, mapping=dict(enumerate(chan_list_eeg_short)), copy=False)
+
+                                if debug:
+                                    # Plot the graph
+                                    plt.figure(figsize=(10, 8))
+                                    pos = nx.spring_layout(graph)  # Layout for visualization
+                                    nx.draw(graph, pos, with_labels=True, node_color='skyblue', edge_color='gray', node_size=700, font_size=10)
+                                    plt.title("Graph Visualization")
+                                    plt.show()
+
+                                #### metrics
+                                global_efficiency = nx.global_efficiency(graph)
+
+                                # Handle disconnected graph for path length calculation
+                                if nx.is_connected(graph):
+                                    path_length = nx.average_shortest_path_length(graph)
+                                else:
+                                    # Compute average shortest path length per connected component
+                                    components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
+                                    path_lengths = [nx.average_shortest_path_length(comp) for comp in components]
+                                    path_length = np.mean(path_lengths)  # Take the mean over components
+
+                                # Compute approximate small-worldness
+                                if path_length > 0:
+                                    small_worldness = nx.transitivity(graph) / path_length
+                                else:
+                                    small_worldness = 0  # Avoid division by zero
+
+                                # Compute modularity (handling single communities)
+                                communities = list(nx.community.greedy_modularity_communities(graph))
+                                if len(communities) > 1:
+                                    modularity = nx.community.modularity(graph, communities)
+                                else:
+                                    modularity = 0  # If there's only one community, modularity is undefined
+
+                                try:
+                                    _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'global_efficiency' : [global_efficiency], 'path_length' : [path_length],
+                                                        'small_worldness' : [small_worldness], 'modularity' : [modularity]})
 
                                     df_graph_metrics_graph_wise = pd.concat((df_graph_metrics_graph_wise, _df))
 
-                                else:
+                                except:
 
-                                    # Create a graph from the adjacency matrix
-                                    mat = thresh_fc_mat(fc_mat_phase[phase_i,:,:], mode=mode, percentile_graph_metric=50 ,mask_graph_metric=fc_mat_mask_signi_phase[phase_i,:,:])
-                                    graph = nx.from_numpy_array(mat)
-                                    nx.relabel_nodes(graph, mapping=dict(enumerate(chan_list_eeg_short)), copy=False)
+                                    _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'global_efficiency' : [0], 'path_length' : [0], 
+                                            'small_worldness' : [0], 'modularity' : [0]})
 
-                                    if debug:
-                                        # Plot the graph
-                                        plt.figure(figsize=(10, 8))
-                                        pos = nx.spring_layout(graph)  # Layout for visualization
-                                        nx.draw(graph, pos, with_labels=True, node_color='skyblue', edge_color='gray', node_size=700, font_size=10)
-                                        plt.title("Graph Visualization")
-                                        plt.show()
-
-                                    #### metrics
-                                    global_efficiency = nx.global_efficiency(graph)
-
-                                    # Handle disconnected graph for path length calculation
-                                    if nx.is_connected(graph):
-                                        path_length = nx.average_shortest_path_length(graph)
-                                    else:
-                                        # Compute average shortest path length per connected component
-                                        components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
-                                        path_lengths = [nx.average_shortest_path_length(comp) for comp in components]
-                                        path_length = np.mean(path_lengths)  # Take the mean over components
-
-                                    # Compute approximate small-worldness
-                                    if path_length > 0:
-                                        small_worldness = nx.transitivity(graph) / path_length
-                                    else:
-                                        small_worldness = 0  # Avoid division by zero
-
-                                    # Compute modularity (handling single communities)
-                                    communities = list(nx.community.greedy_modularity_communities(graph))
-                                    if len(communities) > 1:
-                                        modularity = nx.community.modularity(graph, communities)
-                                    else:
-                                        modularity = 0  # If there's only one community, modularity is undefined
-
-                                    try:
-                                        _df = pd.DataFrame({'sujet' : [sujet], 'phase' : [phase], 'mode' : [mode], 'global_efficiency' : [global_efficiency], 'path_length' : [path_length],
-                                                            'small_worldness' : [small_worldness], 'modularity' : [modularity]})
-
-                                        df_graph_metrics_graph_wise = pd.concat((df_graph_metrics_graph_wise, _df))
-
-                                    except:
-
-                                        _df = pd.DataFrame({'sujet' : [sujet], 'phase' : [phase], 'mode' : [mode], 'global_efficiency' : [0], 'path_length' : [0], 
-                                                'small_worldness' : [0], 'modularity' : [0]})
-
-                                        df_graph_metrics_graph_wise = pd.concat((df_graph_metrics_graph_wise, _df))
+                                    df_graph_metrics_graph_wise = pd.concat((df_graph_metrics_graph_wise, _df))
 
                     #### plot node wise
                     os.chdir(os.path.join(path_results, 'FC', fc_metric, 'graph'))
@@ -1209,7 +1207,7 @@ def plot_allsujet_FC_graph_stretch():
 
                         for mode in ['mask', 'percentile']: 
 
-                            fig, ax = plt.subplots(figsize=(15, 5), sharey=True)
+                            fig, ax = plt.subplots(figsize=(15, 5), sharey=False)
 
                             df_plot = df_graph_metrics_node_wise.query(f"mode == '{mode}'")
                             sns.barplot(data=df_plot, x="chan", y=metric, hue="phase", alpha=0.6, ax=ax)
@@ -1246,7 +1244,7 @@ def plot_allsujet_FC_graph_stretch():
                     #mode = 'mask'
                     for mode in ['mask', 'percentile']: 
 
-                        fig, axs = plt.subplots(ncols=4, figsize=(15, 5), sharey=True)
+                        fig, axs = plt.subplots(ncols=4, figsize=(15, 5), sharey=False)
 
                         for metric_i, metric in enumerate(['global_efficiency', 'path_length', 'small_worldness', 'modularity']):
 
@@ -1267,6 +1265,8 @@ def plot_allsujet_FC_graph_stretch():
                             plt.suptitle(f"mode:{mode} {data_type} {stat_type}")
                         else :
                             plt.suptitle(f"{band} mode:{mode} {data_type} {stat_type}")
+
+                        plt.tight_layout()
 
                         # plt.show()
 

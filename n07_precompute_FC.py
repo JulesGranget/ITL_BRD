@@ -26,10 +26,12 @@ debug = False
 def get_MI_sujet_stretch(sujet):
 
     #### verify computation
-    if os.path.exists(os.path.join(path_precompute, 'FC', 'MI', f'MI_stretch_{sujet}.nc')):
-        print(f'ALREADY DONE MI STRETCH')
+    if os.path.exists(os.path.join(path_precompute, 'FC', 'MI', f'MI_stretch_{sujet}_beta.nc')):
+        print(f'{sujet} ALREADY DONE MI STRETCH')
         return
     
+    print(sujet)
+
     #### params
     os.chdir(path_prep)
     # xr_norm_params = xr.open_dataarray('norm_params.nc')
@@ -163,8 +165,8 @@ def get_MI_sujet_stretch(sujet):
         plt.show()
     
     os.chdir(os.path.join(path_precompute, 'FC', 'MI'))
-    xr_MI_sujet.to_netcdf(f'MI_stretch_{sujet}.nc')
-    xr_MI_sujet_rscore.to_netcdf(f'MI_stretch_{sujet}_rscore.nc')
+    xr_MI_sujet.to_netcdf(f'MI_stretch_{sujet}_beta.nc')
+    xr_MI_sujet_rscore.to_netcdf(f'MI_stretch_{sujet}_rscore_beta.nc')
 
     print('done')
 
@@ -188,13 +190,15 @@ def get_MI_sujet_stretch(sujet):
 def get_ISPC_WPLI_stretch(sujet):
     
     # Check if results already exist
-    ispc_path = os.path.join(path_precompute, 'FC', 'ISPC', f'ISPC_{sujet}_stretch.nc')
-    wpli_path = os.path.join(path_precompute, 'FC', 'WPLI', f'WPLI_{sujet}_stretch.nc')
+    ispc_path = os.path.join(path_precompute, 'FC', 'ISPC', f'ISPC_{sujet}_stretch_beta.nc')
+    wpli_path = os.path.join(path_precompute, 'FC', 'WPLI', f'WPLI_{sujet}_stretch_beta.nc')
     
     if os.path.exists(ispc_path) and os.path.exists(wpli_path):
-        print(f'ALREADY DONE')
+        print(f'{sujet} ALREADY DONE')
         return
     
+    print(sujet)
+
     cond_sel = ['VS', 'CHARGE']
     
     pairs_to_compute = []
@@ -363,21 +367,17 @@ def get_ISPC_WPLI_stretch(sujet):
         plt.show()
         
     os.chdir(os.path.join(path_precompute, 'FC', 'ISPC'))
-    xr_ispc.to_netcdf(f'ISPC_{sujet}_stretch.nc')
-    xr_ispc_rscore.to_netcdf(f'ISPC_{sujet}_stretch_rscore.nc')
+    xr_ispc.to_netcdf(f'ISPC_{sujet}_stretch_beta.nc')
+    xr_ispc_rscore.to_netcdf(f'ISPC_{sujet}_stretch_rscore_beta.nc')
     os.chdir(os.path.join(path_precompute, 'FC', 'WPLI'))
-    xr_wpli.to_netcdf(f'WPLI_{sujet}_stretch.nc')
-    xr_wpli_rscore.to_netcdf(f'WPLI_{sujet}_stretch_rscore.nc')
+    xr_wpli.to_netcdf(f'WPLI_{sujet}_stretch_beta.nc')
+    xr_wpli_rscore.to_netcdf(f'WPLI_{sujet}_stretch_rscore_beta.nc')
     
     print('done')
 
     
 
     
-
-
-
-
 
 
 
@@ -391,13 +391,22 @@ def get_ISPC_WPLI_stretch(sujet):
 
 if __name__ == '__main__':
 
-    ######## COMPUTE FC ALLSUJET ########
+    ######## COMPUTE FC ALLSUJET CLUSTER ########
 
     #get_MI_sujet_stretch()
-    execute_function_in_slurm_bash('n07_precompute_FC', 'get_MI_sujet_stretch', [[sujet] for sujet in sujet_list_FC], n_core=15, mem='20G')
+    # execute_function_in_slurm_bash('n07_precompute_FC', 'get_MI_sujet_stretch', [[sujet] for sujet in sujet_list_FC], n_core=15, mem='20G')
     #sync_folders__push_to_crnldata()
 
     #get_ISPC_WPLI_stretch()
-    execute_function_in_slurm_bash('n07_precompute_FC', 'get_ISPC_WPLI_stretch', [[sujet] for sujet in sujet_list_FC], n_core=20, mem='30G')
+    # execute_function_in_slurm_bash('n07_precompute_FC', 'get_ISPC_WPLI_stretch', [[sujet] for sujet in sujet_list_FC], n_core=20, mem='30G')
     #sync_folders__push_to_crnldata()
+    
+
+    ######## COMPUTE FC ALLSUJET NYC ########
+
+    for sujet in sujet_list_FC:
+        get_ISPC_WPLI_stretch(sujet)
+
+
+
     

@@ -96,7 +96,7 @@ def REG_TF():
 
     #### get mdp
     os.chdir(os.path.join(path_data, 'DYSLEARN'))
-    df_mdp = pd.read_excel('DYSLEARN mdp short.xlsx')
+    df_mdp = pd.read_excel('DYSLEARN MDP short.xlsx')
 
     dict_mdp = {'sujet' : [], 'A2' :  [], 'A1' :  [], 'A1+A2' :  []}
 
@@ -383,7 +383,7 @@ def REG_FC():
 
     #### get mdp
     os.chdir(os.path.join(path_data, 'DYSLEARN'))
-    df_mdp = pd.read_excel('DYSLEARN mdp short.xlsx')
+    df_mdp = pd.read_excel('DYSLEARN MDP short.xlsx')
     sujet_list_sel = [sujet for sujet in xr_fc_mat['sujet'].values if sujet[2:4] == 'DL']
 
     dict_mdp = {'sujet' : [], 'A2' :  [], 'A1' :  [], 'A1+A2' :  []}

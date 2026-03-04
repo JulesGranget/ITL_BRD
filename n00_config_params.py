@@ -183,12 +183,14 @@ elif PC_ID == 'node13':
     path_memmap = '/mnt/data/julesgranget/PIPBox/memmap'
     n_core = 15
 
+#### Jules NYC
 elif PC_ID == 'jules-ubuntu1':
 
     PC_working = 'jules-ubuntu1'
-    path_main_workdir = '/mnt/data/julesgranget/PIPBox/Scripts'
-    path_general = '/mnt/data/julesgranget/PIPBox'
-    path_memmap = '/mnt/data/julesgranget/PIPBox/memmap'
+    path_main_workdir = '/home/jules/Documents/PPI_Jules/Scripts'
+    path_general = '/home/jules/Documents/PPI_Jules'
+    path_memmap = '/home/jules/Documents/PPI_Jules/memmap'
+    n_core = 20
 
 else:
 
@@ -370,13 +372,15 @@ stretch_point_FC = 240
 ncycle_FC = 10
 fc_win_overlap = 0.5
 MI_window_size = int(3*srate)
-freq_band_fc_list = ['theta', 'alpha', 'gamma']
-freq_band_fc = {'theta' : [4,8], 'alpha' : [8,12], 'gamma' : [80,150]}
+
+
+
+freq_band_fc_list = ['theta', 'alpha', 'beta', 'gamma']
+freq_band_fc = {'theta' : [4,8], 'alpha' : [8,12], 'beta' : [12,40], 'gamma' : [80,150]}
 n_surr_fc = 1000
-ISPC_ncycles = {'theta' : 10, 'alpha' : 10, 'gamma' : 30}
-ISPC_window_size = {'theta' : int(ISPC_ncycles['theta']/freq_band_fc['theta'][0]*srate), 'alpha' : int(ISPC_ncycles['alpha']/freq_band_fc['alpha'][0]*srate), 'gamma' : int(ISPC_ncycles['gamma']/freq_band_fc['gamma'][0]*srate)}
-
-
+ISPC_ncycles = {'theta' : 10, 'alpha' : 10, 'beta' : 10, 'gamma' : 30}
+ISPC_window_size = {'theta' : int(ISPC_ncycles['theta']/freq_band_fc['theta'][0]*srate), 'alpha' : int(ISPC_ncycles['alpha']/freq_band_fc['alpha'][0]*srate),
+                    'beta' : int(ISPC_ncycles['beta']/freq_band_fc['beta'][0]*srate), 'gamma' : int(ISPC_ncycles['gamma']/freq_band_fc['gamma'][0]*srate)}
 
 
 
