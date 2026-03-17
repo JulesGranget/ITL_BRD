@@ -200,6 +200,11 @@ def REG_TF():
 
     df_reg = pd.DataFrame(dict_reg)
 
+    #### extract values
+    path_export_df = os.path.join(path_results, 'REG', 'df_reg_export')
+    df_reg_export = df_reg.query(f"metric == 'A1'")
+    df_reg_export.to_excel(path_export_df + f"/df_reg_export.xlsx")
+
     #### plot lmplot
     os.chdir(os.path.join(path_results, 'REG'))
     for metric in mdp_metric_list:

@@ -345,17 +345,25 @@ def save_topoplot_allsujet():
         #band_i, band = 0, freq_band_fc_list[0]
         for band_i, band in enumerate(freq_band_fc_list):
 
+            df_topoplot = [] 
+
             fig, axs = plt.subplots(nrows=1, ncols=len(phase_list), figsize=(15,5))
 
             #phase_i, phase = 0, phase_list[0]
             for phase_i, phase in enumerate(phase_list):
 
+                _data_plot = topoplot_data[phase_i, band_i, :]
+                _data_signi = topoplot_signi[phase_i, band_i, :]
+
                 ax = axs[phase_i]
 
-                im = mne.viz.plot_topomap(data=topoplot_data[phase_i, band_i, :], axes=ax, show=False, names=chan_list_eeg_short, pos=info,
-                                mask=topoplot_signi[phase_i, band_i, :], mask_params=mask_params, vlim=(-vlim[band_i], vlim[band_i]), cmap='seismic', extrapolate='local')
+                im = mne.viz.plot_topomap(data=_data_plot, axes=ax, show=False, names=chan_list_eeg_short, pos=info,
+                                mask=_data_signi, mask_params=mask_params, vlim=(-vlim[band_i], vlim[band_i]), cmap='seismic', extrapolate='local')
 
                 ax.set_title(f'{phase}')
+
+                df_topoplot.append(pd.DataFrame({'chan' : chan_list_eeg_short, 'Pxx' : _data_plot, 'significativity' : _data_signi, 
+                                                 'band' : [band]*chan_list_eeg_short.size, 'phase' : [phase]*chan_list_eeg_short.size}))
 
             cbar = fig.colorbar(im[0], ax=axs, orientation='vertical', shrink=0.7)
             cbar.set_label('robust z-score (a.u.)')  # Label for colorbar
@@ -367,8 +375,11 @@ def save_topoplot_allsujet():
             fig.savefig(f"topoplot_{band}_allsujet_{stat_type}.jpeg")
 
             plt.close('all')
-        
-        
+
+            #extract df data plot
+            df_topoplot = pd.concat(df_topoplot)
+            df_topoplot.to_excel(f"df_results/df_topoplot_{band}_allsujet_{stat_type}.xlsx")
+            
 
 
 

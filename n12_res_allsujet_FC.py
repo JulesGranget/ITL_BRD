@@ -276,7 +276,7 @@ def plot_allsujet_FC_mat_stretch():
 
             pairs_to_compute.append(f'{pair_A}-{pair_B}')        
 
-    #fc_metric = 'MI'
+    #fc_metric = 'WPLI'
     for fc_metric in ['MI', 'ISPC', 'WPLI']:
 
         for data_type in ['raw', 'rscore']:
@@ -376,9 +376,11 @@ def plot_allsujet_FC_mat_stretch():
                             fc_mat_only_signi_whole[A_i, B_i], fc_mat_only_signi_whole[B_i, A_i] = fc_val, fc_val
 
                     #### phase
-
+                    
                     #phase_i, phase = 0, 'I'
                     for phase_i, phase in enumerate(phase_list):
+
+                        df_export_values_signi = []
 
                         if fc_metric == 'MI':
                             fc_mat_mask_signi_phase[phase_i,:,:] = from_pairs_2mat(clusters.loc[data_type, phase,:], pairs_to_compute)
@@ -405,6 +407,17 @@ def plot_allsujet_FC_mat_stretch():
                                 fc_mat_only_signi_phase[phase_i, A_i, B_i], fc_mat_only_signi_phase[phase_i, B_i, A_i] = fc_val, fc_val
                             elif fc_metric != 'MI' and clusters.loc[data_type, phase,band,pair].values.astype('bool'):
                                 fc_mat_only_signi_phase[phase_i, A_i, B_i], fc_mat_only_signi_phase[phase_i, B_i, A_i] = fc_val, fc_val
+
+                            if fc_metric == 'WPLI' and data_type == 'rscore' and clusters.loc[data_type, phase,band,pair].values.astype('bool'):
+                                df_export_values_signi.append(pd.DataFrame({'band' : [band], 'phase' : [phase], 'pair' : [pair], 'fc_val' : [fc_val]}))
+                            elif fc_metric == 'WPLI' and data_type == 'rscore' and clusters.loc[data_type, phase,band,pair].values.astype('bool') == False:
+                                df_export_values_signi.append(pd.DataFrame({'band' : [band], 'phase' : [phase], 'pair' : [pair], 'fc_val' : [0]}))
+
+                        #### export values signi
+                        if fc_metric == 'WPLI':
+                            df_export_values_signi = pd.concat(df_export_values_signi)
+                            path_export = os.path.join(path_results, 'FC', 'WPLI', 'matplot', 'df_export_FC')
+                            df_export_values_signi.to_excel(os.path.join(path_export, f"{band}_{phase}.xlsx"))
 
                     #### plot
                     vlim_whole = np.abs((fc_mat_whole.min(), fc_mat_whole.max())).max()
@@ -1085,7 +1098,7 @@ def plot_allsujet_FC_graph_stretch():
                             if fc_mat_mask_signi_phase[phase_i,:,:].sum() == 0:
 
                                 _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'chan' : [chan], 'degree' : [0], 'clustering_coeff' : [0], 
-                                            'betweenness' : [0], 'eigenvector' : [0]})
+                                            'betweenness' : [0], 'eigenvector' : [0], 'band' : [band]})
 
                                 df_graph_metrics_node_wise = pd.concat((df_graph_metrics_node_wise, _df))
 
@@ -1119,14 +1132,14 @@ def plot_allsujet_FC_graph_stretch():
 
                                     try:
                                         _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'chan' : [chan], 'degree' : [degree[chan]], 'clustering_coeff' : [clustering_coeff[chan]],
-                                                            'betweenness' : [betweenness[chan]], 'eigenvector' : [eigenvector[chan]]})
+                                                            'betweenness' : [betweenness[chan]], 'eigenvector' : [eigenvector[chan]], 'band' : [band]})
 
                                         df_graph_metrics_node_wise = pd.concat((df_graph_metrics_node_wise, _df))
 
                                     except:
 
                                         _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'chan' : [chan], 'degree' : [0], 'clustering_coeff' : [0], 
-                                                'betweenness' : [0], 'eigenvector' : [0]})
+                                                'betweenness' : [0], 'eigenvector' : [0], 'band' : [band]})
 
                                         df_graph_metrics_node_wise = pd.concat((df_graph_metrics_node_wise, _df))
 
@@ -1142,7 +1155,7 @@ def plot_allsujet_FC_graph_stretch():
                             if fc_mat_mask_signi_phase[phase_i,:,:].sum() == 0:
 
                                 _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'global_efficiency' : [0], 'path_length' : [0],
-                                            'small_worldness' : [0], 'modularity' : [0]})
+                                            'small_worldness' : [0], 'modularity' : [0], 'band' : [band]})
 
                                 df_graph_metrics_graph_wise = pd.concat((df_graph_metrics_graph_wise, _df))
 
@@ -1188,16 +1201,22 @@ def plot_allsujet_FC_graph_stretch():
 
                                 try:
                                     _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'global_efficiency' : [global_efficiency], 'path_length' : [path_length],
-                                                        'small_worldness' : [small_worldness], 'modularity' : [modularity]})
+                                                        'small_worldness' : [small_worldness], 'modularity' : [modularity], 'band' : [band]})
 
                                     df_graph_metrics_graph_wise = pd.concat((df_graph_metrics_graph_wise, _df))
 
                                 except:
 
                                     _df = pd.DataFrame({'phase' : [phase], 'mode' : [mode], 'global_efficiency' : [0], 'path_length' : [0], 
-                                            'small_worldness' : [0], 'modularity' : [0]})
+                                            'small_worldness' : [0], 'modularity' : [0], 'band' : [band]})
 
                                     df_graph_metrics_graph_wise = pd.concat((df_graph_metrics_graph_wise, _df))
+
+                    #### export df
+                    if fc_metric == 'WPLI' and stat_type == 'HOMEMADE' and data_type == 'rscore':
+                        path_export = os.path.join(path_results, 'FC', 'WPLI', 'graph', 'df_export_graph')
+                        df_graph_metrics_node_wise.to_excel(os.path.join(path_export, f"NODEWISE_{band}_{fc_metric}_{stat_type}_{data_type}.xlsx"))
+                        df_graph_metrics_graph_wise.to_excel(os.path.join(path_export, f"GRAPHWISE_{band}_{fc_metric}_{stat_type}_{data_type}.xlsx"))
 
                     #### plot node wise
                     os.chdir(os.path.join(path_results, 'FC', fc_metric, 'graph'))
