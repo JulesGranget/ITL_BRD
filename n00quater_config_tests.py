@@ -1,12 +1,156 @@
 
 
 
-from n00_config_params import *
-from n00bis_config_analysis_functions import *
+# from n00_config_params import *
+# from n00bis_config_analysis_functions import *
 
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy
+import os
 
 debug = False
+path_results = ""
 
+
+
+
+################################
+######## WAVELETS ########
+################################
+
+
+
+
+def get_wavelets(srate=500):
+
+    #### compute wavelets
+    wavetime = np.arange(-3,3,1/srate)
+    wavelets = np.zeros((nfrex, len(wavetime)), dtype=complex)
+
+    # create Morlet wavelet family
+    for fi in range(nfrex):
+        
+        s = cycles[fi] / (2*np.pi*frex[fi])
+        gw = np.exp(-wavetime**2/ (2*s**2)) 
+        sw = np.exp(1j*(2*np.pi*frex[fi]*wavetime))
+        mw =  gw * sw
+
+        wavelets[fi,:] = mw
+
+    if debug:
+
+        plt.plot(np.sum(np.abs(wavelets),axis=1))
+        plt.show()
+
+        plt.pcolormesh(np.real(wavelets))
+        plt.show()
+
+        plt.plot(np.real(wavelets)[0,:])
+        plt.show()
+
+    return wavelets
+
+
+
+
+
+################################################################
+######## FUNCTIONAL CONNECTIVITY METRIC EXTRACTION ########
+################################################################
+
+
+
+
+def get_MI_2sig(x, y):
+
+    #### Freedman and Diaconis rule
+    nbins_x = int(np.ceil((x.max() - x.min()) / (2 * scipy.stats.iqr(x)*(x.size**(-1/3)))))
+    nbins_y = int(np.ceil((y.max() - y.min()) / (2 * scipy.stats.iqr(y)*(y.size**(-1/3)))))
+
+    #### compute proba
+    hist_x = np.histogram(x,bins = nbins_x)[0]
+    hist_x = hist_x/np.sum(hist_x)
+    hist_y = np.histogram(y,bins = nbins_y)[0]
+    hist_y = hist_y/np.sum(hist_y)
+
+    hist_2d = np.histogram2d(x, y, bins=[nbins_x, nbins_y])[0]
+    hist_2d = hist_2d / np.sum(hist_2d)
+
+    #### compute MI
+    E_x = 0
+    E_y = 0
+    E_x_y = 0
+
+    for p in hist_x:
+        if p!=0 :
+            E_x += -p*np.log2(p)
+
+    for p in hist_y:
+        if p!=0 :
+            E_y += -p*np.log2(p)
+
+    for p0 in hist_2d:
+        for p in p0 :
+            if p!=0 :
+                E_x_y += -p*np.log2(p)
+
+    MI = E_x+E_y-E_x_y
+
+    return MI
+
+
+
+def get_ISPC_2sig(x, y):
+
+    ##### collect "eulerized" phase angle differences
+    phase_angle_diff = np.exp(1j*(np.angle(x)-np.angle(y)))
+
+    ##### compute ISPC
+    ISPC = np.abs( np.mean(phase_angle_diff) )
+
+    return ISPC
+
+
+
+def get_WPLI_2sig(x, y):
+
+    sxy = x * np.conj(y)
+
+    # Extract imaginary part (which is sin(phase difference))
+    im_part = np.imag(sxy)
+    
+    # Compute the weighted phase lag index (wPLI)
+    numerator = np.abs(np.mean(im_part))  # Mean of the sign of the imaginary part
+    denominator = np.mean(np.abs(im_part))  # Mean of the absolute imaginary part
+    
+    WPLI = numerator / denominator
+
+    return WPLI
+
+
+
+def get_Cxy_2sig(x, y):
+
+    xy = x * np.conj(y)
+    xx = x * np.conj(x)
+    yy = y * np.conj(y)
+
+    num = np.mean(np.abs(xy))**2
+    denom = np.mean(np.abs(xx)) * np.mean(np.abs(yy))
+
+    # Prevent division by zero
+    if denom <= 0:
+        return 0.0  
+
+    Cxy = num / denom
+
+    return Cxy
+
+
+########################################
+######## SIGNAL SIMULATION ########
+########################################
 
 
 def generate_synchronized_signals_CHIRP(duration_tot=1200, num_windows=50, window_dur=5, noise_coeff=1, freq_sync=15, 
@@ -184,6 +328,11 @@ def morlet_wavelet_transform(signal_data, srate=500, freq_sync=6, num_cycles=7):
 
 
 
+################################
+######## EXECUTE ########
+################################
+
+
 # Generate signals
 duration_tot=800 # sec
 num_windows=50
@@ -195,6 +344,17 @@ noise_coeff=2
 amp_coeff=2
 phase_diff=np.pi/2
 freq_var=10
+
+
+# wavelets params
+nfrex = 150
+ncycle_list = [7, 41]
+freq_list = [2, 150]
+wavetime = np.arange(-3,3,1/srate)
+frex = np.logspace(np.log10(freq_list[0]), np.log10(freq_list[1]), nfrex) 
+cycles = np.logspace(np.log10(ncycle_list[0]), np.log10(ncycle_list[1]), nfrex).astype('int')
+
+# generate sig
 
 time_vec = np.arange(0, duration_tot, 1/srate)
 
